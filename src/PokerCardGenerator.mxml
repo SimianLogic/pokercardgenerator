@@ -16,6 +16,7 @@
 		
 		[Bindable]
 		public var layouts:Array = [
+			{"name":"Developer","class":LayoutDeveloper},
 			{"name":"Modern", "class":LayoutModern},
 			{"name":"Antique", "class":LayoutAntique},
 			{"name":"Classic", "class":LayoutClassic}
@@ -88,7 +89,7 @@
 		public function onCreationComplete():void
 		{
 			//TODO: LOAD, otherwise default
-			currentLayout = LayoutModern; 
+			currentLayout = LayoutDeveloper; 
 			layoutList.selectedIndex = 0;
 				
 			var all_suits:Array = [Spade, Club, Heart, Diamond];
