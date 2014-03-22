@@ -26,9 +26,25 @@
 			"spade":Spade,
 			"diamond":Diamond,
 			"heart":Heart,
-			"jack":null,
-			"queen":null,
-			"king":null
+			"jacks": {
+				"club":null,
+				"spade":null,
+				"diamond":null,
+				"heart":null
+			},
+			"queens": {
+				"club":null,
+				"spade":null,
+				"diamond":null,
+				"heart":null
+			},
+			"kings": {
+				"club":null,
+				"spade":null,
+				"diamond":null,
+				"heart":null
+			}
+			
 		}
 			
 		public var selectedSymbols:Object = {
@@ -36,9 +52,24 @@
 			"spade":null,
 			"diamond":null,
 			"heart":null,
-			"jack":null,
-			"queen":null,
-			"king":null
+			"jacks": {
+				"club":null,
+				"spade":null,
+				"diamond":null,
+				"heart":null
+			},
+			"queens": {
+				"club":null,
+				"spade":null,
+				"diamond":null,
+				"heart":null
+			},
+			"kings": {
+				"club":null,
+				"spade":null,
+				"diamond":null,
+				"heart":null
+			}
 		}
 		
 		public var saveFile:File = null;
@@ -213,28 +244,59 @@
 		public function setDefaultSpade(event:Event):void
 		{
 			selectedSymbols["spade"] = null;
+			spadeImage.source = null;
 			spadeSymbol.text = "Default";
 			rebuildCards();
 		}
 		public function setDefaultClub(event:Event):void
 		{
 			selectedSymbols["club"] = null;
+			clubImage.source = null;
 			clubSymbol.text = "Default";
 			rebuildCards();
 		}
 		public function setDefaultHeart(event:Event):void
 		{
 			selectedSymbols["heart"] = null;
+			heartImage.source = null;
 			heartSymbol.text = "Default";
 			rebuildCards();
 		}
 		public function setDefaultDiamond(event:Event):void
 		{
 			selectedSymbols["diamond"] = null;
+			diamondImage.source = null;
 			diamondSymbol.text = "Default";
 			rebuildCards();
 		}
 		
+		private static var CHOOSE_TEXTS:Object = {
+			"spade":"your Spade",
+			"club":"your Club",
+			"heart":"your Heart",
+			"diamond":"your Diamond",
+			"jack":"all of your Jacks",
+			"queen":"all of your Queens",
+			"king":"all of your Kings",
+			"jack_black":"your black Jacks",
+			"jack_red":"your red Jacks",
+			"queen_red":"your red Queens",
+			"queen_black":"your black Queens",
+			"king_red":"your red Kings",
+			"king_black":"your black Kings",
+			"jack_spade":"your Jack of Spades",
+			"jack_club":"your Jack of Clubs",
+			"jack_heart":"your Jack of Hearts",
+			"jack_diamond":"your Jack of Diamonds",
+			"queen_spade":"your Queen of Spades",
+			"queen_club":"your Queen of Clubs",
+			"queen_heart":"your Queen of Hearts",
+			"queen_diamond":"your Queen of Diamonds",
+			"king_spade":"your King of Spades",
+			"king_club":"your King of Clubs",
+			"king_heart":"your King of Hearts",
+			"king_diamond":"your King of Diamonds"
+		};	
 		public function browseFor(key:String):void
 		{
 			trace("BROWSE FOR " + key);
@@ -242,42 +304,43 @@
 			var file:File = new File(); 
 			file.addEventListener(Event.SELECT, on_file); 
 			var image_filter:FileFilter = new FileFilter("Image Files (*.jpg, *.jpeg, *.gif, *.png)", "*.jpg; *.jpeg; *.gif; *.png");
-			file.browseForOpen("Choose a " + key + " image!", [image_filter]); 
+			file.browseForOpen("Choose an image for " + CHOOSE_TEXTS[key] + "!", [image_filter]);
+			
+			var base_key:String = key;
+			var type_key:String = null;
+			var label:Label;
+			var image:Image;
+			
+			if(key.indexOf("_") >= 0)
+			{
+				var data:Array = key.split("_");
+				base_key = data[0];
+				type_key = data[1];
+				label = application[base_key + "Symbol_" + type_key];
+			}else{
+				label = application[key + "Symbol"];
+			}
+			
 			function on_file(e:Event):void {
 				file.removeEventListener(Event.SELECT, on_file);
 				file.addEventListener(Event.COMPLETE, on_file_loaded);
 				file.load();
 				if(saveFile == null)
 				{
-					switch(key)
+					if(label == null)
 					{
-						case "heart":
-							heartSymbol.text = file.nativePath;
-							break;
-						case "spade":
-							spadeSymbol.text = file.nativePath;
-							break;
-						case "diamond":
-							diamondSymbol.text = file.nativePath;
-							break;
-						case "club":
-							clubSymbol.text = file.nativePath;
-							break;
-						case "jack":
-							jackSymbol.text = file.nativePath;
-							break;
-						case "queen":
-							queenSymbol.text = file.nativePath;
-							break;
-						case "king":
-							kingSymbol.text = file.nativePath;
-							break;
-						default:
-							trace("INVALID FILE: " + key);
-							break;
+						trace("INVALID LABEL");
+					}else{
+						label.text = file.nativePath;
 					}
 				}else{
 					//TODO: saveFile.getRelativePath(file);	
+					if(label == null)
+					{
+						trace("INVALID LABEL");
+					}else{
+						label.text = file.getRelativePath(saveFile, true);
+					}
 				}
 			}
 			
@@ -301,9 +364,27 @@
 				if(key == "club") clubImage.source = Bitmap(loaderInfo.content);
 				if(key == "diamond") diamondImage.source = Bitmap(loaderInfo.content);
 				if(key == "heart") heartImage.source = Bitmap(loaderInfo.content);
-				if(key == "jack") jackImage.source = Bitmap(loaderInfo.content);
-				if(key == "queen") queenImage.source = Bitmap(loaderInfo.content);
-				if(key == "king") kingImage.source = Bitmap(loaderInfo.content);
+				
+				if(["jack","queen","king"].indexOf(base_key) >= 0)
+				{
+					var suits_to_update:Array;
+					if(type_key == null)
+					{
+						suits_to_update = ["spade","club","diamond","heart"];
+					}else if(type_key == "black"){
+						suits_to_update = ["spade","club"];
+					}else if(type_key == "red"){
+						suits_to_update = ["heart","diamond"];
+					}else{
+						suits_to_update = [type_key];
+					}
+					
+					for(var i:int = 0; i < suits_to_update.length; i++)
+					{
+						trace("SET " + base_key + "Image_" + suits_to_update[i] + " to loaded image");
+						application[base_key + "Image_" + suits_to_update[i]].source = new Bitmap(Bitmap(loaderInfo.content).bitmapData);
+					}
+				}
 				
 				rebuildCards();
 			}
@@ -333,16 +414,33 @@
 	<mx:TabNavigator id="tabs" width="100%" height="495" tabHeight="30">
 		<mx:HBox label="1) Layout" >
 			<mx:VBox width="50%" height="100%">
+				<mx:Label text="Choose a Layout" textDecoration="underline"/>
 				<mx:List id="layoutList" labelField="name" dataProvider="{layouts}" width="100%" height="50%" change="updateLayout(event)">
 				</mx:List>
-				<mx:VBox width="100%" height="50%">
-					<mx:Label text="Width" />
-					<mx:TextInput id="outputWidth" text="194" change="onSizeChange(event)"/>
-					<mx:Label text="Height" />
-					<mx:TextInput id="outputHeight" text="264" change="onSizeChange(event)"/>
-					<mx:Label text="Match Layout Aspect"/>
-					<mx:CheckBox id="constrainProportions" selected="true"/>
-				</mx:VBox>
+				
+				<mx:HBox width="100%" height="50%">
+					<mx:VBox width="50%" height="100%">
+						<mx:Label text="Output Size" textDecoration="underline" />
+						<mx:HBox>
+							<mx:Label text="Width" />
+							<mx:TextInput id="outputWidth" text="194" change="onSizeChange(event)"/>	
+						</mx:HBox>
+						<mx:HBox>
+							<mx:Label text="Height" />
+							<mx:TextInput id="outputHeight" text="264" change="onSizeChange(event)"/>	
+						</mx:HBox>
+						<mx:HBox>
+							<mx:Label text="Match Layout Aspect"/>
+							<mx:CheckBox id="constrainProportions" selected="true"/>	
+						</mx:HBox>
+						
+						
+					</mx:VBox>
+					<mx:VBox>
+						<!-- TODO: MORE OPTIONS HERE? -->
+					</mx:VBox>
+				</mx:HBox>
+				
 			</mx:VBox>
 			
 			<mx:TextArea id="layoutInfo" width="50%" height="100%" />
@@ -393,31 +491,193 @@
 					<mx:Button label="Select File" click="browseFor('heart')"/>
 					<mx:Button label="Use Default" click="setDefaultHeart(event)"/>
 				</mx:HBox>
-				<mx:Label text="Jack" />
-				<mx:HBox>
-					<mx:Label id="jackSymbol" text="Default" />
-					<mx:Button label="Select File" click="browseFor('jack')"/>
-				</mx:HBox>
-				<mx:Label text="Queen" />
-				<mx:HBox>
-					<mx:Label id="queenSymbol" text="Default" />
-					<mx:Button label="Select File" click="browseFor('queen')"/>
-				</mx:HBox>
-				<mx:Label text="King" />
-				<mx:HBox>
-					<mx:Label id="kingSymbol" text="Default" />
-					<mx:Button label="Select File" click="browseFor('king')"/>
-				</mx:HBox>
+				
+				<mx:TabNavigator id="faceCardTabs" width="100%" height="495" tabHeight="30">
+					<!-- SINGLE FACE FILE OPTIONS -->
+					<mx:VBox label="Single Face">
+						<mx:Label text="Jack, Queen, King (no color differentiation)" textDecoration="underline" />
+						<mx:Label text="Jack" />
+						<mx:HBox>
+							<mx:Label id="jackSymbol" text="Default" />
+							<mx:Button label="Select File" click="browseFor('jack')"/>
+						</mx:HBox>
+						<mx:Label text="Queen" />
+						<mx:HBox>
+							<mx:Label id="queenSymbol" text="Default" />
+							<mx:Button label="Select File" click="browseFor('queen')"/>
+						</mx:HBox>
+						<mx:Label text="King" />
+						<mx:HBox>
+							<mx:Label id="kingSymbol" text="Default" />
+							<mx:Button label="Select File" click="browseFor('king')"/>
+						</mx:HBox>
+					</mx:VBox>
+					
+					<!-- COLOR FACE FILE OPTIONS -->
+					<mx:VBox label="Colored Faces">
+						<mx:Label text="Black Jack, Red Jack, Black Queen..." textDecoration="underline" />
+						<mx:Label text="Black Jack" />
+						<mx:HBox>
+							<mx:Label id="jackSymbol_black" text="Default" />
+							<mx:Button label="Select File" click="browseFor('jack_black')"/>
+						</mx:HBox>
+						<mx:Label text="Red Jack" />
+						<mx:HBox>
+							<mx:Label id="jackSymbol_red" text="Default" />
+							<mx:Button label="Select File" click="browseFor('jack_red')"/>
+						</mx:HBox>
+						<mx:Label text="Black Queen" />
+						<mx:HBox>
+							<mx:Label id="queenSymbol_black" text="Default" />
+							<mx:Button label="Select File" click="browseFor('queen_black')"/>
+						</mx:HBox>
+						<mx:Label text="Red Queen" />
+						<mx:HBox>
+							<mx:Label id="queenSymbol_red" text="Default" />
+							<mx:Button label="Select File" click="browseFor('queen_red')"/>
+						</mx:HBox>
+						<mx:Label text="Black King" />
+						<mx:HBox>
+							<mx:Label id="kingSymbol_black" text="Default" />
+							<mx:Button label="Select File" click="browseFor('king_black')"/>
+						</mx:HBox>
+						<mx:Label text="Red King" />
+						<mx:HBox>
+							<mx:Label id="kingSymbol_red" text="Default" />
+							<mx:Button label="Select File" click="browseFor('king_red')"/>
+						</mx:HBox>
+					</mx:VBox>
+					
+					<!-- UNIQUE FACE FILE OPTIONS -->
+					<mx:VBox label="Suited Faces">
+						<mx:Label text="Jack of Spades, Queen of Hearts, King of Diamonds..." textDecoration="underline" />
+						<mx:Label text="Jack of Spades" />
+						<mx:HBox>
+							<mx:Label id="jackSymbol_spade" text="Default" />
+							<mx:Button label="Select File" click="browseFor('jack_spade')"/>
+						</mx:HBox>
+						<mx:Label text="Jack of Clubs" />
+						<mx:HBox>
+							<mx:Label id="jackSymbol_club" text="Default" />
+							<mx:Button label="Select File" click="browseFor('jack_club')"/>
+						</mx:HBox>
+						<mx:Label text="Jack of Diamonds" />
+						<mx:HBox>
+							<mx:Label id="jackSymbol_diamond" text="Default" />
+							<mx:Button label="Select File" click="browseFor('jack_diamond')"/>
+						</mx:HBox>
+						<mx:Label text="Jack of Hearts" />
+						<mx:HBox>
+							<mx:Label id="jackSymbol_heart" text="Default" />
+							<mx:Button label="Select File" click="browseFor('jack_heart')"/>
+						</mx:HBox>
+						
+						<mx:Label text="Queen of Spades" />
+						<mx:HBox>
+							<mx:Label id="queenSymbol_spade" text="Default" />
+							<mx:Button label="Select File" click="browseFor('queen_spade')"/>
+						</mx:HBox>
+						<mx:Label text="Queen of Clubs" />
+						<mx:HBox>
+							<mx:Label id="queenSymbol_club" text="Default" />
+							<mx:Button label="Select File" click="browseFor('queen_club')"/>
+						</mx:HBox>
+						<mx:Label text="Queen of Diamonds" />
+						<mx:HBox>
+							<mx:Label id="queenSymbol_diamond" text="Default" />
+							<mx:Button label="Select File" click="browseFor('queen_diamond')"/>
+						</mx:HBox>
+						<mx:Label text="Queen of Hearts" />
+						<mx:HBox>
+							<mx:Label id="queenSymbol_heart" text="Default" />
+							<mx:Button label="Select File" click="browseFor('queen_heart')"/>
+						</mx:HBox>
+						
+						<mx:Label text="King of Spades" />
+						<mx:HBox>
+							<mx:Label id="kingSymbol_spade" text="Default" />
+							<mx:Button label="Select File" click="browseFor('king_spade')"/>
+						</mx:HBox>
+						<mx:Label text="King of Clubs" />
+						<mx:HBox>
+							<mx:Label id="kingSymbol_club" text="Default" />
+							<mx:Button label="Select File" click="browseFor('king_club')"/>
+						</mx:HBox>
+						<mx:Label text="King of Diamonds" />
+						<mx:HBox>
+							<mx:Label id="kingSymbol_diamond" text="Default" />
+							<mx:Button label="Select File" click="browseFor('king_diamond')"/>
+						</mx:HBox>
+						<mx:Label text="King of Hearts" />
+						<mx:HBox>
+							<mx:Label id="kingSymbol_heart" text="Default" />
+							<mx:Button label="Select File" click="browseFor('king_heart')"/>
+						</mx:HBox>
+						
+					</mx:VBox>
+				</mx:TabNavigator>
+				
+				
+				
 			</mx:VBox>
-			<mx:HBox width="50%" height="100%">
-				<mx:Image id="spadeImage" />
-				<mx:Image id="clubImage" />
-				<mx:Image id="diamondImage" />
-				<mx:Image id="heartImage" />
-				<mx:Image id="jackImage" />
-				<mx:Image id="queenImage" />
-				<mx:Image id="kingImage" />
-			</mx:HBox>
+			<mx:Grid width="50%" height="100%">
+				<mx:GridRow width="100%">
+					<mx:GridItem width="25%">
+						<mx:Image id="spadeImage" />		
+					</mx:GridItem>
+					<mx:GridItem width="25%">
+						<mx:Image id="clubImage" />
+					</mx:GridItem>
+					<mx:GridItem width="25%">
+						<mx:Image id="diamondImage" />
+					</mx:GridItem>
+					<mx:GridItem width="25%">
+						<mx:Image id="heartImage" />
+					</mx:GridItem>
+				</mx:GridRow>
+				<mx:GridRow>
+					<mx:GridItem>
+						<mx:Image id="jackImage_spade" />		
+					</mx:GridItem>
+					<mx:GridItem>
+						<mx:Image id="jackImage_club" />
+					</mx:GridItem>
+					<mx:GridItem>
+						<mx:Image id="jackImage_diamond" />
+					</mx:GridItem>
+					<mx:GridItem>
+						<mx:Image id="jackImage_heart" />
+					</mx:GridItem>
+				</mx:GridRow>
+				<mx:GridRow>
+					<mx:GridItem>
+						<mx:Image id="queenImage_spade" />		
+					</mx:GridItem>
+					<mx:GridItem>
+						<mx:Image id="queenImage_club" />
+					</mx:GridItem>
+					<mx:GridItem>
+						<mx:Image id="queenImage_diamond" />
+					</mx:GridItem>
+					<mx:GridItem>
+						<mx:Image id="queenImage_heart" />
+					</mx:GridItem>
+				</mx:GridRow>
+				<mx:GridRow>
+					<mx:GridItem>
+						<mx:Image id="kingImage_spade" />		
+					</mx:GridItem>
+					<mx:GridItem>
+						<mx:Image id="kingImage_club" />
+					</mx:GridItem>
+					<mx:GridItem>
+						<mx:Image id="kingImage_diamond" />
+					</mx:GridItem>
+					<mx:GridItem>
+						<mx:Image id="kingImage_heart" />
+					</mx:GridItem>
+				</mx:GridRow>
+			</mx:Grid>
 		</mx:HBox>
 		<mx:HBox label="4) Preview" />
 	</mx:TabNavigator>

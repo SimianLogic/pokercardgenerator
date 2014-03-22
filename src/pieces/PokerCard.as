@@ -35,7 +35,6 @@ package pieces
 		public function set suitBitmapData(new_data:BitmapData):void
 		{
 			_suitBitmapData = new_data;
-			trace("SUIT BITMAP DATA = " + new_data);
 			update();
 		}
 		
@@ -163,7 +162,6 @@ package pieces
 		//HELPERS
 		public static function sizeDOtoDO(baseClip:DisplayObject, newClip:DisplayObject):void
 		{
-			trace("SIZE CLIP (" + newClip.width + "x" + newClip.height +") to fit within (" + baseClip.width + "x" + baseClip.height + ")");
 			var w_aspect:Number = baseClip.width / newClip.width;
 			var h_aspect:Number = baseClip.height / newClip.height;
 			
