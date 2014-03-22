@@ -1,0 +1,17 @@
+RECOVER*
+*.apk
+*.ipa
+src/SixWordsSpaceport-app.xml
+.actionScriptProperties
+.actionScriptProperties.spaceportSettings
+.dropbox
+.DS_Store
+.settings*
+.shake.database
+.project
+bin-debug/
+out/
+
+
+
+

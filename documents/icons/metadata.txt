@@ -1,0 +1,1 @@
+root_width|128||root_height|128||club|3|3||heart|0|-2||diamond|4|3||spade|5|3||rabbit|10|0||butterfly|5|18

@@ -1,0 +1,425 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- http://blog.flexexamples.com/2008/07/31/displaying-different-fonts-in-a-dropdown-menu-on-a-combobox-control-in-flex/ -->
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml"
+				creationComplete="onCreationComplete()"
+				layout="vertical"
+				verticalAlign="top"
+				backgroundColor="white"
+				width="1024" height="768" 
+				paddingBottom="0" paddingTop="0" paddingLeft="0" paddingRight="0" xmlns:local="*" xmlns:pieces="pieces.*">
+	
+	<mx:Script><![CDATA[
+		import mx.controls.Text;
+		import mx.events.ListEvent;
+		
+		import pieces.*;
+		
+		[Bindable]
+		public var layouts:Array = [
+			{"name":"Modern", "class":LayoutModern},
+			{"name":"Antique", "class":LayoutAntique},
+			{"name":"Classic", "class":LayoutClassic}
+		];
+		
+		public var defaultSymbols:Object = {
+			"club":Club,
+			"spade":Spade,
+			"diamond":Diamond,
+			"heart":Heart,
+			"jack":null,
+			"queen":null,
+			"king":null
+		}
+			
+		public var selectedSymbols:Object = {
+			"club":null,
+			"spade":null,
+			"diamond":null,
+			"heart":null,
+			"jack":null,
+			"queen":null,
+			"king":null
+		}
+		
+		public var saveFile:File = null;
+		
+		public var currentLayout:Class;
+		public var currentFont:Font;
+		
+		public var currentWidth:int = 194;
+		public var currentHeight:int = 269;
+		
+		public var baseWidth:int = 194;
+		public var baseHeight:int = 269;
+		
+		public var cards:Array;
+		
+		public function onCreationComplete():void
+		{
+			//TODO: LOAD, otherwise default
+			currentLayout = LayoutModern; 
+			layoutList.selectedIndex = 0;
+				
+			var all_suits:Array = [Spade, Club, Heart, Diamond];
+			var labels:Array = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+			var card_width:Number = 97;
+			var card_height:Number = 135;
+			cards = [];
+			for(var i:int = 0; i < 4; i++)
+			{
+				for(var j:int = 0; j < 13; j++)
+				{
+					var pc:PokerCard = new PokerCard();
+					pc.value = j+1;
+					pc.suit = i;
+					pc.layout = currentLayout; 
+					
+					cards.push(pc);
+					
+					cardStrip.addChild(pc);
+					
+					pc.width = card_width;
+					pc.height = card_height;
+				}
+			}
+			updateUniques();
+		}
+		
+		public function updateLayout(e:ListEvent):void
+		{
+			currentLayout = layouts[e.rowIndex]["class"];
+			refreshLayout();
+		}
+		
+		public function refreshLayout():void
+		{
+			for(var i:int = 0; i < 4; i++)
+			{
+				for(var j:int = 0; j < 13; j++)
+				{
+					cards[i*13 + j].layout = currentLayout;
+				}
+			}
+			
+			refreshFont();
+			updateUniques();
+		}
+		
+		//spits out the largest needed dimensions of each card found (jack/queen/king/suit) 
+		public function updateUniques():void
+		{
+			if(cards == null) return;
+			
+			var out:String = "";
+			var names:Array = [];
+			var dimensions:Array = [];
+			
+			var width_mod:Number = currentWidth*1.0/baseWidth;
+			var height_mod:Number = currentHeight*1.0/baseHeight;
+			
+			for(var i:int = 0; i < cards.length; i++)
+			{
+				var children:Array = [];
+				children = children.concat(PokerCard.findChildrenByName(cards[i], "jack"));
+				children = children.concat(PokerCard.findChildrenByName(cards[i], "queen"));
+				children = children.concat(PokerCard.findChildrenByName(cards[i], "king"));
+				children = children.concat(PokerCard.findChildrenByName(cards[i], "suit"));
+				for(var j:int = 0; j < children.length; j++)
+				{
+					if(names.indexOf(children[j].name) == -1)
+					{
+						names.push(children[j].name);
+						dimensions.push(Math.round(children[j].width*width_mod) + "x" + Math.round(children[j].height*height_mod));
+						out += children[j].name + ": " + Math.round(children[j].width*width_mod) + "x" + Math.round(children[j].height*height_mod) + "\n";  
+					}
+				}
+			}
+			layoutInfo.text = out;
+		}
+		
+		public function onSizeChange(event:Event):void
+		{
+			var new_value:int = parseInt(event.target.text);
+			var aspect:Boolean = constrainProportions.selected;
+			var ratio:Number = (baseWidth*1.0)/(baseHeight*1.0);
+			
+			trace("NEW VALUE: " + new_value + ", ASPECT: " + aspect + ", RATIO: " + ratio);
+			
+			if(new_value == 0) return;
+			
+			if(event.target == outputWidth)
+			{
+				currentWidth = new_value;
+				if(aspect)
+				{
+					currentHeight = currentWidth / ratio;
+					outputHeight.text = currentHeight + "";
+				}
+			}else{
+				currentHeight = new_value;
+				if(aspect)
+				{
+					currentWidth = currentHeight * ratio;
+					outputWidth.text = currentWidth + "";
+				}
+			}
+			updateUniques();
+		}
+		
+		public function onFontChange(event:ListEvent):void
+		{
+			currentFont = fonts[event.rowIndex];
+			refreshFont();
+		}
+		
+		public function refreshFont():void
+		{	
+			if(currentFont == null) return;
+			
+			for(var i:int = 0; i < cards.length; i++)
+			{
+				var children:Array = PokerCard.findChildrenByName(cards[i], "value");
+				for each(var tf:TextField in children)
+				{
+					var format:TextFormat = tf.defaultTextFormat;
+					format.font = currentFont.fontName;
+					tf.setTextFormat(format);
+					tf.embedFonts = false;
+				}
+			}
+		}
+		
+		public function rebuildCards():void
+		{
+			refreshLayout();
+			refreshFont();
+			
+			for(var i:int = 0; i < cards.length; i++)
+			{
+				if(cards[i].suit == PokerCard.SPADE)
+				{
+					cards[i].suitBitmapData = selectedSymbols["spade"];
+				}else if(cards[i].suit == PokerCard.CLUB){
+					cards[i].suitBitmapData = selectedSymbols["club"];
+				}else if(cards[i].suit == PokerCard.DIAMOND){
+					cards[i].suitBitmapData = selectedSymbols["diamond"];
+				}else if(cards[i].suit == PokerCard.HEART){
+					cards[i].suitBitmapData = selectedSymbols["heart"];
+				}
+			}
+				
+		}
+		
+		public function setDefaultSpade(event:Event):void
+		{
+			selectedSymbols["spade"] = null;
+			spadeSymbol.text = "Default";
+			rebuildCards();
+		}
+		public function setDefaultClub(event:Event):void
+		{
+			selectedSymbols["club"] = null;
+			clubSymbol.text = "Default";
+			rebuildCards();
+		}
+		public function setDefaultHeart(event:Event):void
+		{
+			selectedSymbols["heart"] = null;
+			heartSymbol.text = "Default";
+			rebuildCards();
+		}
+		public function setDefaultDiamond(event:Event):void
+		{
+			selectedSymbols["diamond"] = null;
+			diamondSymbol.text = "Default";
+			rebuildCards();
+		}
+		
+		public function browseFor(key:String):void
+		{
+			trace("BROWSE FOR " + key);
+			
+			var file:File = new File(); 
+			file.addEventListener(Event.SELECT, on_file); 
+			var image_filter:FileFilter = new FileFilter("Image Files (*.jpg, *.jpeg, *.gif, *.png)", "*.jpg; *.jpeg; *.gif; *.png");
+			file.browseForOpen("Choose a " + key + " image!", [image_filter]); 
+			function on_file(e:Event):void {
+				file.removeEventListener(Event.SELECT, on_file);
+				file.addEventListener(Event.COMPLETE, on_file_loaded);
+				file.load();
+				if(saveFile == null)
+				{
+					switch(key)
+					{
+						case "heart":
+							heartSymbol.text = file.nativePath;
+							break;
+						case "spade":
+							spadeSymbol.text = file.nativePath;
+							break;
+						case "diamond":
+							diamondSymbol.text = file.nativePath;
+							break;
+						case "club":
+							clubSymbol.text = file.nativePath;
+							break;
+						case "jack":
+							jackSymbol.text = file.nativePath;
+							break;
+						case "queen":
+							queenSymbol.text = file.nativePath;
+							break;
+						case "king":
+							kingSymbol.text = file.nativePath;
+							break;
+						default:
+							trace("INVALID FILE: " + key);
+							break;
+					}
+				}else{
+					//TODO: saveFile.getRelativePath(file);	
+				}
+			}
+			
+			function on_file_loaded(event:Event):void
+			{
+				file.removeEventListener(Event.COMPLETE, on_file_loaded);
+				
+				var loader:Loader = new Loader();
+				loader.contentLoaderInfo.addEventListener(Event.COMPLETE, on_loader);
+				loader.loadBytes(file.data);
+			}
+			
+			function on_loader(event:Event):void
+			{
+				var loaderInfo:LoaderInfo = (event.target as LoaderInfo);
+				loaderInfo.removeEventListener(Event.COMPLETE, on_loader);
+				
+				selectedSymbols[key] = Bitmap(loaderInfo.content).bitmapData;
+				
+				if(key == "spade") spadeImage.source = Bitmap(loaderInfo.content);
+				if(key == "club") clubImage.source = Bitmap(loaderInfo.content);
+				if(key == "diamond") diamondImage.source = Bitmap(loaderInfo.content);
+				if(key == "heart") heartImage.source = Bitmap(loaderInfo.content);
+				if(key == "jack") jackImage.source = Bitmap(loaderInfo.content);
+				if(key == "queen") queenImage.source = Bitmap(loaderInfo.content);
+				if(key == "king") kingImage.source = Bitmap(loaderInfo.content);
+				
+				rebuildCards();
+			}
+			
+		}
+		
+	]]></mx:Script>
+	
+	<mx:ArrayCollection id="fonts" source="{Font.enumerateFonts(true)}">
+		<mx:sort>
+			<mx:Sort>
+				<mx:fields>
+					<mx:SortField name="fontName" />
+				</mx:fields>
+			</mx:Sort>
+		</mx:sort>
+	</mx:ArrayCollection>
+	
+	<mx:ApplicationControlBar dock="true" dropShadowVisible="false">
+		<mx:Button label="Load"  />
+		<mx:Button label="Save"  />
+		<mx:Button label="Save As..."  />		
+		<mx:Label text="(untitled)" width="100%" />
+		<mx:Button label="Export"  />
+	</mx:ApplicationControlBar>
+	
+	<mx:TabNavigator id="tabs" width="100%" height="495" tabHeight="30">
+		<mx:HBox label="1) Layout" >
+			<mx:VBox width="50%" height="100%">
+				<mx:List id="layoutList" labelField="name" dataProvider="{layouts}" width="100%" height="50%" change="updateLayout(event)">
+				</mx:List>
+				<mx:VBox width="100%" height="50%">
+					<mx:Label text="Width" />
+					<mx:TextInput id="outputWidth" text="194" change="onSizeChange(event)"/>
+					<mx:Label text="Height" />
+					<mx:TextInput id="outputHeight" text="264" change="onSizeChange(event)"/>
+					<mx:Label text="Match Layout Aspect"/>
+					<mx:CheckBox id="constrainProportions" selected="true"/>
+				</mx:VBox>
+			</mx:VBox>
+			
+			<mx:TextArea id="layoutInfo" width="50%" height="100%" />
+		</mx:HBox>
+		<mx:HBox label="2) Font" paddingLeft="25">
+			<mx:VBox horizontalAlign="right">
+				<mx:List id="fontList" variableRowHeight="true" 
+						 dataProvider="{fonts}"
+						 labelField="fontName" 
+						 fontSize="18"
+						 height="400"
+						 width="400"
+						 allowMultipleSelection="false" 
+						 change="onFontChange(event)">
+					<mx:itemRenderer>
+						<mx:Component>
+							<mx:Label fontFamily="{data.fontName}"
+									  toolTip="{data.fontName}" />
+						</mx:Component>
+					</mx:itemRenderer>
+				</mx:List>
+				<mx:Button label="Randomize" click="fontList.selectedIndex = Math.floor(Math.random()*fonts.length); fontList.scrollToIndex(Math.max(1,fontList.selectedIndex - 1));" />
+			</mx:VBox>
+		</mx:HBox>
+		<mx:HBox label="3) Images" paddingTop="0" paddingLeft="10">
+			<mx:VBox label="Bitmaps/PNGs" width="50%" height="100%">
+				<mx:Label text="Spade" />
+				<mx:HBox>
+					<mx:Label id="spadeSymbol" text="Default" />
+					<mx:Button label="Select File" click="browseFor('spade')"/>
+					<mx:Button label="Use Default" click="setDefaultSpade(event)"/>
+				</mx:HBox>
+				<mx:Label text="Club" />
+				<mx:HBox>
+					<mx:Label id="clubSymbol" text="Default" />
+					<mx:Button label="Select File" click="browseFor('club')"/>
+					<mx:Button label="Use Default" click="setDefaultClub(event)"/>
+				</mx:HBox>
+				<mx:Label text="Diamond" />
+				<mx:HBox>
+					<mx:Label id="diamondSymbol" text="Default" />
+					<mx:Button label="Select File" click="browseFor('diamond')"/>
+					<mx:Button label="Use Default" click="setDefaultDiamond(event)"/>
+				</mx:HBox>
+				<mx:Label text="Heart" />
+				<mx:HBox>
+					<mx:Label id="heartSymbol" text="Default" />
+					<mx:Button label="Select File" click="browseFor('heart')"/>
+					<mx:Button label="Use Default" click="setDefaultHeart(event)"/>
+				</mx:HBox>
+				<mx:Label text="Jack" />
+				<mx:HBox>
+					<mx:Label id="jackSymbol" text="Default" />
+					<mx:Button label="Select File" click="browseFor('jack')"/>
+				</mx:HBox>
+				<mx:Label text="Queen" />
+				<mx:HBox>
+					<mx:Label id="queenSymbol" text="Default" />
+					<mx:Button label="Select File" click="browseFor('queen')"/>
+				</mx:HBox>
+				<mx:Label text="King" />
+				<mx:HBox>
+					<mx:Label id="kingSymbol" text="Default" />
+					<mx:Button label="Select File" click="browseFor('king')"/>
+				</mx:HBox>
+			</mx:VBox>
+			<mx:HBox width="50%" height="100%">
+				<mx:Image id="spadeImage" />
+				<mx:Image id="clubImage" />
+				<mx:Image id="diamondImage" />
+				<mx:Image id="heartImage" />
+				<mx:Image id="jackImage" />
+				<mx:Image id="queenImage" />
+				<mx:Image id="kingImage" />
+			</mx:HBox>
+		</mx:HBox>
+		<mx:HBox label="4) Preview" />
+	</mx:TabNavigator>
+	<mx:HBox id="cardStrip" width="1024" horizontalAlign="left" horizontalScrollPolicy="on" horizontalGap="1" />
+</mx:Application>

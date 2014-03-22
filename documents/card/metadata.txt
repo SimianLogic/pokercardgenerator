@@ -1,0 +1,1 @@
+card_front|0|0:card_back|0|0:club|68|186:spade|68|184:diamond|68|186:heart|65|187
