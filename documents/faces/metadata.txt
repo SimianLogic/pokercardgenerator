@@ -1,0 +1,1 @@
+root_width|500+root_height|734+black_king|19|3+black_queen|22|31+black_jack|1|13+red_king|19|3+red_queen|22|31+red_jack|1|13
