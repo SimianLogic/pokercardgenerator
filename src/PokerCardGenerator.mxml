@@ -442,13 +442,11 @@
 			
 			for(i=0; i < needs_empty.length; i++)
 			{
-				trace("NEEDS EMPTY: " + needs_empty[i]);
 				FlexGlobals.topLevelApplication[needs_empty[i]].text = "";	
 			}
 			
 			for(i=0; i < needs_update.length; i++)
 			{
-				trace("NEEDS UPDATE: " + needs_update[i]);
 				var label:Label = FlexGlobals.topLevelApplication[base_key + "Symbol_" + needs_update[i]];
 				label.text = path;
 			}
@@ -458,19 +456,16 @@
 			//if both red suits are the same, set the red setting
 			if(FlexGlobals.topLevelApplication[base_key + "Symbol_heart"].text == FlexGlobals.topLevelApplication[base_key + "Symbol_diamond"].text)
 			{
-				trace("heart == diamond, set red");
 				FlexGlobals.topLevelApplication[base_key + "Symbol_red"].text = FlexGlobals.topLevelApplication[base_key + "Symbol_heart"].text; 
 			}
 			//if both black suits are the same, set the black setting
 			if(FlexGlobals.topLevelApplication[base_key + "Symbol_spade"].text == FlexGlobals.topLevelApplication[base_key + "Symbol_club"].text)
 			{
-				trace("spade == club, set black");
 				FlexGlobals.topLevelApplication[base_key + "Symbol_black"].text = FlexGlobals.topLevelApplication[base_key + "Symbol_club"].text; 
 			}
 			//if red and black are the same, set the global
 			if(FlexGlobals.topLevelApplication[base_key + "Symbol_black"].text == FlexGlobals.topLevelApplication[base_key + "Symbol_red"].text)
 			{
-				trace("black == red, set root");
 				FlexGlobals.topLevelApplication[base_key + "Symbol"].text = FlexGlobals.topLevelApplication[base_key + "Symbol_red"].text;
 			}
 			
