@@ -9,6 +9,7 @@
 				paddingBottom="0" paddingTop="0" paddingLeft="0" paddingRight="0" xmlns:local="*" xmlns:pieces="pieces.*">
 	
 	<mx:Script><![CDATA[
+		import mx.controls.Alert;
 		import mx.controls.Text;
 		import mx.core.FlexGlobals;
 		import mx.events.ListEvent;
@@ -73,10 +74,12 @@
 				"heart":null
 			}
 		}
-		
+
 		public var saveFile:File = null;
 		
 		public var currentLayout:Class;
+		
+		[Bindable]
 		public var currentFont:Font;
 		
 		public var currentWidth:int = 194;
@@ -206,7 +209,11 @@
 		
 		public function onFontChange(event:ListEvent):void
 		{
-			currentFont = fonts[event.rowIndex];
+			setFontIndex(event.rowIndex);
+		}
+		private function setFontIndex(index:int):void
+		{
+			currentFont = fonts[index];
 			refreshFont();
 		}
 		
@@ -474,29 +481,141 @@
 		
 		
 		/***************** SAVE, SAVE AS, LOAD ********************************/
+		private var potentialSave:File;
 		private function handleLoad():void
 		{
+			potentialSave = new File();
+			var docFilter:FileFilter = new FileFilter("Documents", "*.txt");
 			
+			potentialSave.browseForOpen("Choose Project", [docFilter]);
+			potentialSave.addEventListener(Event.SELECT, onLoadSelect);
+			potentialSave.addEventListener(Event.CANCEL, onLoadCancel);
+		}
+		private function onLoadSelect(event:Event):void
+		{
+			potentialSave.removeEventListener(Event.SELECT, onLoadSelect);
+			potentialSave.removeEventListener(Event.CANCEL, onLoadCancel);
+			
+			potentialSave.addEventListener(Event.COMPLETE, onLoadComplete);
+			potentialSave.load();
+		}
+		private function onLoadComplete(event:Event):void
+		{
+			potentialSave.addEventListener(Event.COMPLETE, onLoadComplete);
+			saveFile = potentialSave;
+			saveFileLabel.text = saveFile.nativePath;
+			potentialSave = null;
+			
+			trace("*******************************");
+			trace(event.target.data.toString());
+			stringToState(event.target.data.toString());
+			trace("*******************************");
+		}
+		private function onLoadCancel(event:Event):void
+		{
+			potentialSave.removeEventListener(Event.SELECT, onLoadSelect);
+			potentialSave.removeEventListener(Event.CANCEL, onLoadCancel);
+			potentialSave = null;
 		}
 		
 		private function handleSave():void
 		{
+			if(saveFile == null)
+			{
+				handleSaveAs();
+				return;
+			}
+			
+			var stream:FileStream = new FileStream();
+			stream.open(saveFile, FileMode.WRITE);
+			stream.writeUTFBytes(stateToString());
+			stream.close();
+			
 			
 		}
 		
 		private function handleSaveAs():void
 		{
+			trace(stateToString());
 			
+			potentialSave = new File();
+			potentialSave.addEventListener(Event.CANCEL, onCancelSaveAs);
+			potentialSave.addEventListener(Event.SELECT, onSelectSaveAs);	
+			potentialSave.browseForSave("Save Project");
+		}
+		
+		private function onCancelSaveAs(event:Event):void
+		{
+			potentialSave.removeEventListener(Event.CANCEL, onCancelSaveAs);
+			potentialSave.removeEventListener(Event.SELECT, onSelectSaveAs);
+			potentialSave = null;
+		}
+		private function onSelectSaveAs(event:Event):void
+		{
+			potentialSave.removeEventListener(Event.CANCEL, onCancelSaveAs);
+			potentialSave.removeEventListener(Event.SELECT, onSelectSaveAs);
+			potentialSave = null;
+			
+			saveFile = event.target as File;
+			saveFileLabel.text = saveFile.nativePath;
+			handleSave();
+		}
+		
+		
+		private function stringToState(state:String):void
+		{
+			var lines:Array = state.split("\n");
+			for each(var line:String in lines)
+			{
+				if(line == "") continue;
+				var data:Array = line.split(":");
+				var key:String = data[0];
+				var value:String = data[1];
+				switch(key)
+				{
+					case "layout":
+						for(var layout_index:int = 0; layout_index < layouts.length; layout_index++)
+						{
+							if(layouts[layout_index]["name"] == value)
+							{
+								layoutList.selectedIndex = layout_index;
+							}
+						}
+						break;
+					case "font":
+						for(var font_index:int=0; font_index < fonts.length; font_index++)
+						{
+							if(fonts[font_index].fontName == value)
+							{
+								setFontIndex(font_index);
+							}							
+						}
+						break;
+					case "size":
+						var sizes:Array = value.split("x");
+						outputWidth.text = sizes[0];
+						outputHeight.text = sizes[1];
+						break;
+					case "constrain":
+						constrainProportions.selected = (value == "true");
+						break;
+					default:
+						Alert.show('Unrecognized key: ' + key);
+				}
+			}
+			
+			refreshLayout();
+			updateUniques();
 		}
 		
 		private function stateToString():String
 		{
-			var out:String;
+			var out:String = "";
 			
-			var whichLayout:String = layouts[layoutList.selectedIndex]["name"];
-			var whichFont:String = fonts.getItemAt(fontList.selectedIndex).name;
-			var size:String = outputWidth + "x" + outputHeight;
-			var constrain:String = constrainProportions.selected.toString();
+			if(layoutList.selectedIndex >= 0) 	out += "layout:" + layouts[layoutList.selectedIndex]["name"] + "\n";
+			if(fontList.selectedIndex >= 0) 	out += "font:" + fonts.getItemAt(fontList.selectedIndex).fontName + "\n";
+			out += "size:" + outputWidth.text + "x" + outputHeight.text + "\n";
+			out += "constrain:" + constrainProportions.selected.toString() + "\n";
 			
 			
 			var spade:String = spadeSymbol.text;
@@ -523,11 +642,11 @@
 		<mx:Button label="Load"  click="handleLoad()"/>
 		<mx:Button label="Save"  click="handleSave()"/>
 		<mx:Button label="Save As..."  click="handleSaveAs()"/>		
-		<mx:Label text="(untitled)" width="100%" />
+		<mx:Label id="saveFileLabel" text="(unsaved project)" width="100%" />
 		<mx:Button label="Export"  />
 	</mx:ApplicationControlBar>
 	
-	<mx:TabNavigator id="tabs" width="100%" height="495" tabHeight="30">
+	<mx:TabNavigator id="tabs" width="100%" height="495" tabHeight="30" creationPolicy="all">
 		<mx:HBox label="1) Layout" >
 			<mx:VBox width="50%" height="100%">
 				<mx:Label text="Choose a Layout" textDecoration="underline"/>
@@ -578,7 +697,11 @@
 						</mx:Component>
 					</mx:itemRenderer>
 				</mx:List>
-				<mx:Button label="Randomize" click="fontList.selectedIndex = Math.floor(Math.random()*fonts.length); fontList.scrollToIndex(Math.max(1,fontList.selectedIndex - 1));" />
+				<mx:HBox>
+					<mx:Label text="{currentFont.fontName}" fontFamily="{currentFont.fontName}" fontSize="18"/>
+					<mx:Button label="Randomize" click="setFontIndex(Math.floor(Math.random()*fonts.length));" />	
+				</mx:HBox>
+				
 			</mx:VBox>
 		</mx:HBox>
 		<mx:HBox label="3) Images" paddingTop="0" paddingLeft="10">
