@@ -390,9 +390,126 @@
 					}
 				}
 				
+				synchSelections(base_key, type_key);
 				rebuildCards();
 			}
 			
+		}
+		
+		private function synchSelections(base_key:String, type_key:String):void
+		{
+			var i:int;
+			
+			var needs_empty:Array;
+			var needs_update:Array; //working set
+			var path:String;
+			
+			//set ALL cards to be the selected key
+			if(type_key == null)
+			{
+				//nothing to empty
+				needs_empty = [];
+				//set all downstream labels to be the global one
+				needs_update = ["red","black","spade","club","heart","diamond"];
+				//string is the base symbol
+				path = FlexGlobals.topLevelApplication[base_key + "Symbol"].text;
+			}else if(type_key == "red"){
+				//empty the base key
+				needs_empty = [base_key + "Symbol"];
+				//set downstream COLORED suits to be the colored one
+				needs_update = ["heart","diamond"];
+				//path is red dude
+				path = FlexGlobals.topLevelApplication[base_key + "Symbol_red"].text;
+			}else if(type_key == "black"){
+				//empty the base key
+				needs_empty = [base_key + "Symbol"];
+				//set downstream COLORED suits to be the colored one
+				needs_update = ["spade","club"];
+				//path is red dude
+				path = FlexGlobals.topLevelApplication[base_key + "Symbol_black"].text;
+			}else{
+				//empty the base key
+				needs_empty = [base_key + "Symbol"];
+				//if we chose a specific red card, empty the red options
+				if(["heart","diamond"].indexOf(type_key) >= 0) needs_empty.push(base_key + "Symbol_red");
+				//if we chose a specific black card, empty the black options
+				if(["spade","club"].indexOf(type_key) >= 0) needs_empty.push(base_key + "Symbol_black");
+				
+				needs_update = [];
+				path = "";  //doesn't matter, nothing trickles down
+				
+			}
+			
+			for(i=0; i < needs_empty.length; i++)
+			{
+				trace("NEEDS EMPTY: " + needs_empty[i]);
+				FlexGlobals.topLevelApplication[needs_empty[i]].text = "";	
+			}
+			
+			for(i=0; i < needs_update.length; i++)
+			{
+				trace("NEEDS UPDATE: " + needs_update[i]);
+				var label:Label = FlexGlobals.topLevelApplication[base_key + "Symbol_" + needs_update[i]];
+				label.text = path;
+			}
+			
+			//NOW... go the other way!
+			
+			//if both red suits are the same, set the red setting
+			if(FlexGlobals.topLevelApplication[base_key + "Symbol_heart"].text == FlexGlobals.topLevelApplication[base_key + "Symbol_diamond"].text)
+			{
+				trace("heart == diamond, set red");
+				FlexGlobals.topLevelApplication[base_key + "Symbol_red"].text = FlexGlobals.topLevelApplication[base_key + "Symbol_heart"].text; 
+			}
+			//if both black suits are the same, set the black setting
+			if(FlexGlobals.topLevelApplication[base_key + "Symbol_spade"].text == FlexGlobals.topLevelApplication[base_key + "Symbol_club"].text)
+			{
+				trace("spade == club, set black");
+				FlexGlobals.topLevelApplication[base_key + "Symbol_black"].text = FlexGlobals.topLevelApplication[base_key + "Symbol_club"].text; 
+			}
+			//if red and black are the same, set the global
+			if(FlexGlobals.topLevelApplication[base_key + "Symbol_black"].text == FlexGlobals.topLevelApplication[base_key + "Symbol_red"].text)
+			{
+				trace("black == red, set root");
+				FlexGlobals.topLevelApplication[base_key + "Symbol"].text = FlexGlobals.topLevelApplication[base_key + "Symbol_red"].text;
+			}
+			
+			
+		}
+		
+		
+		/***************** SAVE, SAVE AS, LOAD ********************************/
+		private function handleLoad():void
+		{
+			
+		}
+		
+		private function handleSave():void
+		{
+			
+		}
+		
+		private function handleSaveAs():void
+		{
+			
+		}
+		
+		private function stateToString():String
+		{
+			var out:String;
+			
+			var whichLayout:String = layouts[layoutList.selectedIndex]["name"];
+			var whichFont:String = fonts.getItemAt(fontList.selectedIndex).name;
+			var size:String = outputWidth + "x" + outputHeight;
+			var constrain:String = constrainProportions.selected.toString();
+			
+			
+			var spade:String = spadeSymbol.text;
+			var club:String = clubSymbol.text;
+			var heart:String = heartSymbol.text;
+			var diamond:String = diamondSymbol.text;
+			
+			return out;
 		}
 		
 	]]></mx:Script>
@@ -408,9 +525,9 @@
 	</mx:ArrayCollection>
 	
 	<mx:ApplicationControlBar dock="true" dropShadowVisible="false">
-		<mx:Button label="Load"  />
-		<mx:Button label="Save"  />
-		<mx:Button label="Save As..."  />		
+		<mx:Button label="Load"  click="handleLoad()"/>
+		<mx:Button label="Save"  click="handleSave()"/>
+		<mx:Button label="Save As..."  click="handleSaveAs()"/>		
 		<mx:Label text="(untitled)" width="100%" />
 		<mx:Button label="Export"  />
 	</mx:ApplicationControlBar>
@@ -496,23 +613,23 @@
 					<mx:Button label="Use Default" click="setDefaultHeart(event)"/>
 				</mx:HBox>
 				
-				<mx:TabNavigator id="faceCardTabs" width="100%" height="495" tabHeight="30">
+				<mx:TabNavigator id="faceCardTabs" width="100%" height="495" tabHeight="30" creationPolicy="all">
 					<!-- SINGLE FACE FILE OPTIONS -->
 					<mx:VBox label="Single Face">
 						<mx:Label text="Jack, Queen, King (no color differentiation)" textDecoration="underline" />
 						<mx:Label text="Jack" />
 						<mx:HBox>
-							<mx:Label id="jackSymbol" text="Default" />
+							<mx:Label id="jackSymbol" text="" />
 							<mx:Button label="Select File" click="browseFor('jack')"/>
 						</mx:HBox>
 						<mx:Label text="Queen" />
 						<mx:HBox>
-							<mx:Label id="queenSymbol" text="Default" />
+							<mx:Label id="queenSymbol" text="" />
 							<mx:Button label="Select File" click="browseFor('queen')"/>
 						</mx:HBox>
 						<mx:Label text="King" />
 						<mx:HBox>
-							<mx:Label id="kingSymbol" text="Default" />
+							<mx:Label id="kingSymbol" text="" />
 							<mx:Button label="Select File" click="browseFor('king')"/>
 						</mx:HBox>
 					</mx:VBox>
@@ -522,32 +639,32 @@
 						<mx:Label text="Black Jack, Red Jack, Black Queen..." textDecoration="underline" />
 						<mx:Label text="Black Jack" />
 						<mx:HBox>
-							<mx:Label id="jackSymbol_black" text="Default" />
+							<mx:Label id="jackSymbol_black" text="" />
 							<mx:Button label="Select File" click="browseFor('jack_black')"/>
 						</mx:HBox>
 						<mx:Label text="Red Jack" />
 						<mx:HBox>
-							<mx:Label id="jackSymbol_red" text="Default" />
+							<mx:Label id="jackSymbol_red" text="" />
 							<mx:Button label="Select File" click="browseFor('jack_red')"/>
 						</mx:HBox>
 						<mx:Label text="Black Queen" />
 						<mx:HBox>
-							<mx:Label id="queenSymbol_black" text="Default" />
+							<mx:Label id="queenSymbol_black" text="" />
 							<mx:Button label="Select File" click="browseFor('queen_black')"/>
 						</mx:HBox>
 						<mx:Label text="Red Queen" />
 						<mx:HBox>
-							<mx:Label id="queenSymbol_red" text="Default" />
+							<mx:Label id="queenSymbol_red" text="" />
 							<mx:Button label="Select File" click="browseFor('queen_red')"/>
 						</mx:HBox>
 						<mx:Label text="Black King" />
 						<mx:HBox>
-							<mx:Label id="kingSymbol_black" text="Default" />
+							<mx:Label id="kingSymbol_black" text="" />
 							<mx:Button label="Select File" click="browseFor('king_black')"/>
 						</mx:HBox>
 						<mx:Label text="Red King" />
 						<mx:HBox>
-							<mx:Label id="kingSymbol_red" text="Default" />
+							<mx:Label id="kingSymbol_red" text="" />
 							<mx:Button label="Select File" click="browseFor('king_red')"/>
 						</mx:HBox>
 					</mx:VBox>
@@ -557,64 +674,64 @@
 						<mx:Label text="Jack of Spades, Queen of Hearts, King of Diamonds..." textDecoration="underline" />
 						<mx:Label text="Jack of Spades" />
 						<mx:HBox>
-							<mx:Label id="jackSymbol_spade" text="Default" />
+							<mx:Label id="jackSymbol_spade" text="" />
 							<mx:Button label="Select File" click="browseFor('jack_spade')"/>
 						</mx:HBox>
 						<mx:Label text="Jack of Clubs" />
 						<mx:HBox>
-							<mx:Label id="jackSymbol_club" text="Default" />
+							<mx:Label id="jackSymbol_club" text="" />
 							<mx:Button label="Select File" click="browseFor('jack_club')"/>
 						</mx:HBox>
 						<mx:Label text="Jack of Diamonds" />
 						<mx:HBox>
-							<mx:Label id="jackSymbol_diamond" text="Default" />
+							<mx:Label id="jackSymbol_diamond" text="" />
 							<mx:Button label="Select File" click="browseFor('jack_diamond')"/>
 						</mx:HBox>
 						<mx:Label text="Jack of Hearts" />
 						<mx:HBox>
-							<mx:Label id="jackSymbol_heart" text="Default" />
+							<mx:Label id="jackSymbol_heart" text="" />
 							<mx:Button label="Select File" click="browseFor('jack_heart')"/>
 						</mx:HBox>
 						
 						<mx:Label text="Queen of Spades" />
 						<mx:HBox>
-							<mx:Label id="queenSymbol_spade" text="Default" />
+							<mx:Label id="queenSymbol_spade" text="" />
 							<mx:Button label="Select File" click="browseFor('queen_spade')"/>
 						</mx:HBox>
 						<mx:Label text="Queen of Clubs" />
 						<mx:HBox>
-							<mx:Label id="queenSymbol_club" text="Default" />
+							<mx:Label id="queenSymbol_club" text="" />
 							<mx:Button label="Select File" click="browseFor('queen_club')"/>
 						</mx:HBox>
 						<mx:Label text="Queen of Diamonds" />
 						<mx:HBox>
-							<mx:Label id="queenSymbol_diamond" text="Default" />
+							<mx:Label id="queenSymbol_diamond" text="" />
 							<mx:Button label="Select File" click="browseFor('queen_diamond')"/>
 						</mx:HBox>
 						<mx:Label text="Queen of Hearts" />
 						<mx:HBox>
-							<mx:Label id="queenSymbol_heart" text="Default" />
+							<mx:Label id="queenSymbol_heart" text="" />
 							<mx:Button label="Select File" click="browseFor('queen_heart')"/>
 						</mx:HBox>
 						
 						<mx:Label text="King of Spades" />
 						<mx:HBox>
-							<mx:Label id="kingSymbol_spade" text="Default" />
+							<mx:Label id="kingSymbol_spade" text="" />
 							<mx:Button label="Select File" click="browseFor('king_spade')"/>
 						</mx:HBox>
 						<mx:Label text="King of Clubs" />
 						<mx:HBox>
-							<mx:Label id="kingSymbol_club" text="Default" />
+							<mx:Label id="kingSymbol_club" text="" />
 							<mx:Button label="Select File" click="browseFor('king_club')"/>
 						</mx:HBox>
 						<mx:Label text="King of Diamonds" />
 						<mx:HBox>
-							<mx:Label id="kingSymbol_diamond" text="Default" />
+							<mx:Label id="kingSymbol_diamond" text="" />
 							<mx:Button label="Select File" click="browseFor('king_diamond')"/>
 						</mx:HBox>
 						<mx:Label text="King of Hearts" />
 						<mx:HBox>
-							<mx:Label id="kingSymbol_heart" text="Default" />
+							<mx:Label id="kingSymbol_heart" text="" />
 							<mx:Button label="Select File" click="browseFor('king_heart')"/>
 						</mx:HBox>
 						
