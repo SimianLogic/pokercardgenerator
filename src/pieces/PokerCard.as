@@ -23,11 +23,18 @@ package pieces
 		
 		private var card:MovieClip;
 		
+		public static const SUIT_TO_STRING:Array = ["spade","club","heart","diamond"];
+		
 		private var _suit:int;
 		private var _value:int;
 		private var _layout:Class;
 		
 		public var suitGraphics:Array;
+		public var faceGraphics:Object = {
+			"jack":null,
+			"queen":null,
+			"king":null
+		};
 		
 		
 		private var _suitBitmapData:BitmapData;
@@ -99,12 +106,68 @@ package pieces
 		{
 			return _suit;
 		}
+		public function get suitAsString():String {
+			return SUIT_TO_STRING[_suit]; 
+		}		
 		
 		public function set suit(new_suit:int):void
 		{
 			if(new_suit == _suit) return;
 			_suit = new_suit;
 			
+			update();
+		}
+		
+		public function setFace(key:String, bitmap_data:BitmapData):void
+		{
+			switch(key)
+			{
+				case "jack":
+					_jackBitmapData = bitmap_data;
+					break;
+				case "queen":
+					_queenBitmapData = bitmap_data;
+					break;
+				case "king":
+					_kingBitmapData = bitmap_data;
+					break;
+				default:
+					throw new Error("INVALID FACE CARD: " + key);
+					break;
+			}
+			update();
+		}
+		
+		private var _jackBitmapData:BitmapData;
+		public function get jackBitmapData():BitmapData
+		{
+			return _jackBitmapData;
+		}
+		public function set jackBitmapData(bitmap_data:BitmapData):void
+		{
+			_jackBitmapData = bitmap_data;
+			update();
+		}
+		
+		private var _queenBitmapData:BitmapData;
+		public function get queenBitmapData():BitmapData
+		{
+			return _queenBitmapData;
+		}
+		public function set queenBitmapData(bitmap_data:BitmapData):void
+		{
+			_queenBitmapData = bitmap_data;
+			update();
+		}
+		
+		private var _kingBitmapData:BitmapData;
+		public function get kingBitmapData():BitmapData
+		{
+			return _kingBitmapData;
+		}
+		public function set kingBitmapData(bitmap_data:BitmapData):void
+		{
+			_kingBitmapData = bitmap_data;
 			update();
 		}
 		
@@ -117,6 +180,9 @@ package pieces
 			
 			var suits:Array = findChildren(card, "suit");
 			var values:Array = findChildren(card, "value");
+			var jacks:Array = findChildren(card, "jack");
+			var queens:Array = findChildren(card, "queen");
+			var kings:Array = findChildren(card, "king");
 			
 			for each(var tf:TextField in values)
 			{
@@ -128,7 +194,6 @@ package pieces
 				var bitmap_data:BitmapData;
 				if(_suitBitmapData == null)
 				{
-					trace("USE THE DEFAULT IMAGE FOR YOUR SUIT");
 					var suit_klass:Class = SUITS[_suit];
 					bitmap_data = new suit_klass();
 				}else{
@@ -143,6 +208,41 @@ package pieces
 				
 				suit.visible = false;
 			}
+			
+			for each(var jack:MovieClip in jacks)
+			{
+				setFaceGraphic("jack",jack, _jackBitmapData);
+			}
+			
+			for each(var queen:MovieClip in queens)
+			{
+				setFaceGraphic("queen",queen, _queenBitmapData);
+			}
+			
+			for each(var king:MovieClip in kings)
+			{
+				setFaceGraphic("king",king, _kingBitmapData);
+			}
+			
+		}
+		
+		private function setFaceGraphic(key:String, placer:MovieClip, bitmap_data:BitmapData):void
+		{
+			if(bitmap_data == null)
+			{
+				if(faceGraphics[key] != null)
+				{
+					faceGraphics[key].parent.removeChild(faceGraphics[key]);
+					faceGraphics[key] = null;
+				}
+				placer.visible = true;
+			}
+			 
+			var face_clip:Bitmap = new Bitmap(bitmap_data);
+			sizeDOtoDO(placer, face_clip);
+			
+			placer.parent.addChild(face_clip);
+			placer.visible = false;
 		}
 		
 		override protected function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void 
@@ -170,7 +270,7 @@ package pieces
 			newClip.scaleY = aspect;
 			
 			newClip.x = baseClip.x + (baseClip.width - newClip.width)/2;
-			newClip.y = baseClip.y + (baseClip.width - newClip.height)/2;
+			newClip.y = baseClip.y + (baseClip.height - newClip.height)/2;
 		}
 		
 		//move this to a helper

@@ -10,6 +10,7 @@
 	
 	<mx:Script><![CDATA[
 		import mx.controls.Text;
+		import mx.core.FlexGlobals;
 		import mx.events.ListEvent;
 		
 		import pieces.*;
@@ -317,9 +318,9 @@
 				var data:Array = key.split("_");
 				base_key = data[0];
 				type_key = data[1];
-				label = application[base_key + "Symbol_" + type_key];
+				label = FlexGlobals.topLevelApplication[base_key + "Symbol_" + type_key];
 			}else{
-				label = application[key + "Symbol"];
+				label = FlexGlobals.topLevelApplication[key + "Symbol"];
 			}
 			
 			function on_file(e:Event):void {
@@ -382,8 +383,15 @@
 					
 					for(var i:int = 0; i < suits_to_update.length; i++)
 					{
-						trace("SET " + base_key + "Image_" + suits_to_update[i] + " to loaded image");
-						application[base_key + "Image_" + suits_to_update[i]].source = new Bitmap(Bitmap(loaderInfo.content).bitmapData);
+						FlexGlobals.topLevelApplication[base_key + "Image_" + suits_to_update[i]].source = new Bitmap(Bitmap(loaderInfo.content).bitmapData);
+						
+						for(var j:int = 0; j < cards.length; j++)
+						{
+							if(cards[j].suitAsString == suits_to_update[i])
+							{
+								cards[j].setFace(base_key, Bitmap(loaderInfo.content).bitmapData);
+							}
+						}
 					}
 				}
 				
@@ -624,58 +632,58 @@
 			<mx:Grid width="50%" height="100%">
 				<mx:GridRow width="100%">
 					<mx:GridItem width="25%">
-						<mx:Image id="spadeImage" />		
+						<mx:Image id="spadeImage" width="100"/>		
 					</mx:GridItem>
 					<mx:GridItem width="25%">
-						<mx:Image id="clubImage" />
+						<mx:Image id="clubImage" width="100"/>
 					</mx:GridItem>
 					<mx:GridItem width="25%">
-						<mx:Image id="diamondImage" />
+						<mx:Image id="diamondImage" width="100"/>
 					</mx:GridItem>
 					<mx:GridItem width="25%">
-						<mx:Image id="heartImage" />
+						<mx:Image id="heartImage" width="100"/>
 					</mx:GridItem>
 				</mx:GridRow>
 				<mx:GridRow>
 					<mx:GridItem>
-						<mx:Image id="jackImage_spade" />		
+						<mx:Image id="jackImage_spade" width="100"/>		
 					</mx:GridItem>
 					<mx:GridItem>
-						<mx:Image id="jackImage_club" />
+						<mx:Image id="jackImage_club" width="100"/>
 					</mx:GridItem>
 					<mx:GridItem>
-						<mx:Image id="jackImage_diamond" />
+						<mx:Image id="jackImage_diamond" width="100"/>
 					</mx:GridItem>
 					<mx:GridItem>
-						<mx:Image id="jackImage_heart" />
-					</mx:GridItem>
-				</mx:GridRow>
-				<mx:GridRow>
-					<mx:GridItem>
-						<mx:Image id="queenImage_spade" />		
-					</mx:GridItem>
-					<mx:GridItem>
-						<mx:Image id="queenImage_club" />
-					</mx:GridItem>
-					<mx:GridItem>
-						<mx:Image id="queenImage_diamond" />
-					</mx:GridItem>
-					<mx:GridItem>
-						<mx:Image id="queenImage_heart" />
+						<mx:Image id="jackImage_heart" width="100"/>
 					</mx:GridItem>
 				</mx:GridRow>
 				<mx:GridRow>
 					<mx:GridItem>
-						<mx:Image id="kingImage_spade" />		
+						<mx:Image id="queenImage_spade" width="100"/>
 					</mx:GridItem>
 					<mx:GridItem>
-						<mx:Image id="kingImage_club" />
+						<mx:Image id="queenImage_club" width="100"/>
 					</mx:GridItem>
 					<mx:GridItem>
-						<mx:Image id="kingImage_diamond" />
+						<mx:Image id="queenImage_diamond" width="100"/>
 					</mx:GridItem>
 					<mx:GridItem>
-						<mx:Image id="kingImage_heart" />
+						<mx:Image id="queenImage_heart" width="100"/>
+					</mx:GridItem>
+				</mx:GridRow>
+				<mx:GridRow>
+					<mx:GridItem>
+						<mx:Image id="kingImage_spade" width="100"/>		
+					</mx:GridItem>
+					<mx:GridItem>
+						<mx:Image id="kingImage_club" width="100"/>
+					</mx:GridItem>
+					<mx:GridItem>
+						<mx:Image id="kingImage_diamond" width="100"/>
+					</mx:GridItem>
+					<mx:GridItem>
+						<mx:Image id="kingImage_heart" width="100"/>
 					</mx:GridItem>
 				</mx:GridRow>
 			</mx:Grid>
