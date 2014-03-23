@@ -29,22 +29,22 @@
 			"diamond":Diamond,
 			"heart":Heart,
 			"jacks": {
-				"club":null,
-				"spade":null,
-				"diamond":null,
-				"heart":null
+				"club":FaceBlackJack,
+				"spade":FaceBlackJack,
+				"diamond":FaceRedJack,
+				"heart":FaceRedJack
 			},
 			"queens": {
-				"club":null,
-				"spade":null,
-				"diamond":null,
-				"heart":null
+				"club":FaceBlackQueen,
+				"spade":FaceBlackQueen,
+				"diamond":FaceRedQueen,
+				"heart":FaceRedQueen
 			},
 			"kings": {
-				"club":null,
-				"spade":null,
-				"diamond":null,
-				"heart":null
+				"club":FaceBlackKing,
+				"spade":FaceBlackKing,
+				"diamond":FaceRedKing,
+				"heart":FaceRedKing
 			}
 			
 		}
@@ -106,6 +106,11 @@
 					pc.value = j+1;
 					pc.suit = i;
 					pc.layout = currentLayout; 
+					
+					pc.suitBitmapData = new defaultSymbols[pc.suitAsString]();
+					pc.jackBitmapData = new defaultSymbols["jacks"][pc.suitAsString]();
+					pc.queenBitmapData = new defaultSymbols["queens"][pc.suitAsString]();
+					pc.kingBitmapData = new defaultSymbols["kings"][pc.suitAsString]();
 					
 					cards.push(pc);
 					
@@ -229,18 +234,8 @@
 			
 			for(var i:int = 0; i < cards.length; i++)
 			{
-				if(cards[i].suit == PokerCard.SPADE)
-				{
-					cards[i].suitBitmapData = selectedSymbols["spade"];
-				}else if(cards[i].suit == PokerCard.CLUB){
-					cards[i].suitBitmapData = selectedSymbols["club"];
-				}else if(cards[i].suit == PokerCard.DIAMOND){
-					cards[i].suitBitmapData = selectedSymbols["diamond"];
-				}else if(cards[i].suit == PokerCard.HEART){
-					cards[i].suitBitmapData = selectedSymbols["heart"];
-				}
+				cards[i].suitBitmapData = selectedSymbols[cards[i].suitAsString] || (new defaultSymbols[cards[i].suitAsString]());
 			}
-				
 		}
 		
 		public function setDefaultSpade(event:Event):void
