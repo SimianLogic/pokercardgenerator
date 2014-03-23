@@ -76,6 +76,7 @@
 		}
 
 		public var saveFile:File = null;
+		public var isUsingRelativePaths = false;
 		
 		public var currentLayout:Class;
 		
@@ -310,6 +311,14 @@
 			var image_filter:FileFilter = new FileFilter("Image Files (*.jpg, *.jpeg, *.gif, *.png)", "*.jpg; *.jpeg; *.gif; *.png");
 			file.browseForOpen("Choose an image for " + CHOOSE_TEXTS[key] + "!", [image_filter]);
 			
+			function on_file(e:Event):void {
+				file.removeEventListener(Event.SELECT, on_file);
+				loadAsset(key, file);
+			}
+		}
+		
+		public function loadAsset(key:String, file:File):void
+		{
 			var base_key:String = key;
 			var type_key:String = null;
 			var label:Label;
@@ -325,26 +334,23 @@
 				label = FlexGlobals.topLevelApplication[key + "Symbol"];
 			}
 			
-			function on_file(e:Event):void {
-				file.removeEventListener(Event.SELECT, on_file);
-				file.addEventListener(Event.COMPLETE, on_file_loaded);
-				file.load();
-				if(saveFile == null)
+			file.addEventListener(Event.COMPLETE, on_file_loaded);
+			file.load();
+			if(saveFile == null)
+			{
+				if(label == null)
 				{
-					if(label == null)
-					{
-						trace("INVALID LABEL");
-					}else{
-						label.text = file.nativePath;
-					}
+					trace("INVALID LABEL");
 				}else{
-					//TODO: saveFile.getRelativePath(file);	
-					if(label == null)
-					{
-						trace("INVALID LABEL");
-					}else{
-						label.text = file.getRelativePath(saveFile, true);
-					}
+					label.text = file.nativePath;
+				}
+			}else{
+				//TODO: saveFile.getRelativePath(file);	
+				if(label == null)
+				{
+					trace("INVALID LABEL");
+				}else{
+					label.text = saveFile.getRelativePath(file, true);
 				}
 			}
 			
@@ -397,7 +403,7 @@
 					}
 				}
 				
-				synchSelections(base_key, type_key);
+				if(["jack","queen","king"].indexOf(base_key) >= 0) synchSelections(base_key, type_key);
 				rebuildCards();
 			}
 			
@@ -509,6 +515,7 @@
 			trace("*******************************");
 			trace(event.target.data.toString());
 			stringToState(event.target.data.toString());
+			isUsingRelativePaths = true;
 			trace("*******************************");
 		}
 		private function onLoadCancel(event:Event):void
@@ -530,8 +537,6 @@
 			stream.open(saveFile, FileMode.WRITE);
 			stream.writeUTFBytes(stateToString());
 			stream.close();
-			
-			
 		}
 		
 		private function handleSaveAs():void
@@ -558,17 +563,62 @@
 			
 			saveFile = event.target as File;
 			saveFileLabel.text = saveFile.nativePath;
+			updatePathsToRelative();
 			handleSave();
+		}
+		private function updatePathsToRelative()
+		{
+			if(isUsingRelativePaths) return;
+			
+			isUsingRelativePaths = true;
+			
+			var labels:Array = [spadeSymbol, clubSymbol, heartSymbol, diamondSymbol,
+				jackSymbol, queenSymbol, kingSymbol,
+				jackSymbol_red, jackSymbol_black, queenSymbol_red, queenSymbol_black, kingSymbol_red, kingSymbol_black,
+				jackSymbol_spade, jackSymbol_club, queenSymbol_spade, queenSymbol_club, kingSymbol_spade, kingSymbol_club,
+				jackSymbol_heart, jackSymbol_diamond, queenSymbol_heart, queenSymbol_diamond, kingSymbol_heart, kingSymbol_diamond];
+			
+			var file:File;
+			for each(var label:Label in labels)
+			{
+				if(label.text == "") continue;
+				
+				//see if file exists
+				file = new File(label.text);
+				if(file.exists)
+				{
+					trace("WE WERE A NATIVE PATH");
+					trace("LABEL.TEXT WAS= " + label.text);
+					trace("saveFile is " + saveFile);
+					trace("saveFile path is " + saveFile.nativePath);
+					trace("NOW SET TO " + saveFile.getRelativePath(file, true));
+					label.text = saveFile.getRelativePath(file, true);
+				}else{
+					file = saveFile.resolvePath(label.text);
+					if(file.exists)
+					{
+						trace("WE WERE ALREADY RELATIVE");
+					}else{
+						trace("UH OH, SOMETHING'S SCREWED UP");
+					}
+				}
+				
+			}
 		}
 		
 		
 		private function stringToState(state:String):void
 		{
+			if(saveFile == null)
+			{
+				throw new Error("NEED A SAVE FILE TO PROCESS RELATIVE PATHS");
+			}
+			
 			var lines:Array = state.split("\n");
 			for each(var line:String in lines)
 			{
 				if(line == "") continue;
-				var data:Array = line.split(":");
+				var data:Array = line.split("||");
 				var key:String = data[0];
 				var value:String = data[1];
 				switch(key)
@@ -599,6 +649,39 @@
 					case "constrain":
 						constrainProportions.selected = (value == "true");
 						break;
+					case "spade":
+						spadeSymbol.text = value;
+						var spade:File = saveFile.resolvePath(value);
+						if(spade.exists)
+						{
+							loadAsset(key, spade);
+						}
+						break;
+					case "club":
+						clubSymbol.text = value;
+						var club:File = saveFile.resolvePath(value);
+						if(club.exists)
+						{
+							loadAsset(key, club);
+						}
+						break;
+					case "diamond":
+						diamondSymbol.text = value;
+						var diamond:File = saveFile.resolvePath(value);
+						if(diamond.exists)
+						{
+							loadAsset(key, diamond);
+						}
+						break;
+					case "heart":
+						heartSymbol.text = value;
+						var heart:File = saveFile.resolvePath(value);
+						if(heart.exists)
+						{
+							loadAsset(key, heart);
+						}
+						break;
+					
 					default:
 						Alert.show('Unrecognized key: ' + key);
 				}
@@ -612,16 +695,17 @@
 		{
 			var out:String = "";
 			
-			if(layoutList.selectedIndex >= 0) 	out += "layout:" + layouts[layoutList.selectedIndex]["name"] + "\n";
-			if(fontList.selectedIndex >= 0) 	out += "font:" + fonts.getItemAt(fontList.selectedIndex).fontName + "\n";
-			out += "size:" + outputWidth.text + "x" + outputHeight.text + "\n";
-			out += "constrain:" + constrainProportions.selected.toString() + "\n";
+			if(layoutList.selectedIndex >= 0) 	out += "layout||" + layouts[layoutList.selectedIndex]["name"] + "\n";
+			if(fontList.selectedIndex >= 0) 	out += "font||" + fonts.getItemAt(fontList.selectedIndex).fontName + "\n";
+			out += "size||" + outputWidth.text + "x" + outputHeight.text + "\n";
+			out += "constrain||" + constrainProportions.selected.toString() + "\n";
 			
 			
-			var spade:String = spadeSymbol.text;
-			var club:String = clubSymbol.text;
-			var heart:String = heartSymbol.text;
-			var diamond:String = diamondSymbol.text;
+			if(spadeSymbol.text != "") out += "spade||" + spadeSymbol.text + "\n";
+			if(clubSymbol.text != "") out += "club||" + clubSymbol.text + "\n";
+			if(diamondSymbol.text != "") out += "diamond||" + diamondSymbol.text + "\n";
+			if(heartSymbol.text != "") out += "heart||" + heartSymbol.text + "\n";
+			
 			
 			return out;
 		}
@@ -708,25 +792,25 @@
 			<mx:VBox label="Bitmaps/PNGs" width="50%" height="100%">
 				<mx:Label text="Spade" />
 				<mx:HBox>
-					<mx:Label id="spadeSymbol" text="Default" />
+					<mx:Label id="spadeSymbol" text="" />
 					<mx:Button label="Select File" click="browseFor('spade')"/>
 					<mx:Button label="Use Default" click="setDefaultSpade(event)"/>
 				</mx:HBox>
 				<mx:Label text="Club" />
 				<mx:HBox>
-					<mx:Label id="clubSymbol" text="Default" />
+					<mx:Label id="clubSymbol" text="" />
 					<mx:Button label="Select File" click="browseFor('club')"/>
 					<mx:Button label="Use Default" click="setDefaultClub(event)"/>
 				</mx:HBox>
 				<mx:Label text="Diamond" />
 				<mx:HBox>
-					<mx:Label id="diamondSymbol" text="Default" />
+					<mx:Label id="diamondSymbol" text="" />
 					<mx:Button label="Select File" click="browseFor('diamond')"/>
 					<mx:Button label="Use Default" click="setDefaultDiamond(event)"/>
 				</mx:HBox>
 				<mx:Label text="Heart" />
 				<mx:HBox>
-					<mx:Label id="heartSymbol" text="Default" />
+					<mx:Label id="heartSymbol" text="" />
 					<mx:Button label="Select File" click="browseFor('heart')"/>
 					<mx:Button label="Use Default" click="setDefaultHeart(event)"/>
 				</mx:HBox>
