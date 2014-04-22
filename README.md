@@ -1,5 +1,8 @@
 First working release. Works best while run from Flash Builder, but including an AIR binary as well. 
 
+DOWNLOAD BINARY: https://github.com/SimianLogic/pokercardgenerator/releases/download/0.1/PokerCardGenerator.air
+TODO: walkthrough
+
 Support for:
 * choosing a card layout
 * adjusting output size
