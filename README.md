@@ -2,7 +2,7 @@ First working release. Works best while run from Flash Builder, but including an
 
 DOWNLOAD BINARY: https://github.com/SimianLogic/pokercardgenerator/releases/download/0.1/PokerCardGenerator.air
 
-TODO: walkthrough
+WALKTHROUGH: http://www.ludumdare.com/compo/2014/04/21/free-tool-poker-card-generator/
 
 Support for:
 * choosing a card layout
