@@ -1,0 +1,8 @@
+layout||Modern
+size||194x264
+constrain||true
+spade||../../documents/dragon_assets/fire.png
+jack_spade||../../documents/dragon_assets/sky_jack.png
+jack_club||../../documents/dragon_assets/sky_jack.png
+jack_diamond||../../documents/dragon_assets/sky_jack.png
+jack_heart||../../documents/dragon_assets/sky_jack.png
