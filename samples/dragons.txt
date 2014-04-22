@@ -1,5 +1,5 @@
 layout||Modern
-font||Adobe Caslon Pro Bold
+font||Avenir Black Oblique
 size||500x693
 constrain||true
 spade||../../documents/dragon_assets/earth.png
@@ -7,14 +7,14 @@ club||../../documents/dragon_assets/sky.png
 diamond||../../documents/dragon_assets/fire.png
 heart||../../documents/dragon_assets/water.png
 jack_spade||../../documents/dragon_assets/earth_jack.png
-jack_club||../../documents/dragon_assets/earth_jack.png
+jack_club||../../documents/dragon_assets/sky_jack.png
 jack_diamond||../../documents/dragon_assets/fire_jack.png
-jack_heart||../../documents/dragon_assets/fire_jack.png
+jack_heart||../../documents/dragon_assets/water_jack.png
 queen_spade||../../documents/dragon_assets/earth_queen.png
-queen_club||../../documents/dragon_assets/earth_queen.png
+queen_club||../../documents/dragon_assets/sky_queen.png
 queen_diamond||../../documents/dragon_assets/fire_queen.png
-queen_heart||../../documents/dragon_assets/fire_queen.png
+queen_heart||../../documents/dragon_assets/water_queen.png
 king_spade||../../documents/dragon_assets/earth_king.png
-king_club||../../documents/dragon_assets/earth_king.png
+king_club||../../documents/dragon_assets/sky_king.png
 king_diamond||../../documents/dragon_assets/fire_king.png
-king_heart||../../documents/dragon_assets/fire_king.png
+king_heart||../../documents/dragon_assets/water_king.png

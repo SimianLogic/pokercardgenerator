@@ -20,6 +20,7 @@ Not supported:
 
 Known Bugs:
 * font choice saves, but on project load the font is not reflected in the cards
+* seems like the king of hearts image doesn't get loaded from a project file
 
 
 License: code and binary are WTFPL -- Do Whatever the Fuck You Want. Feel free to use the 30-second gradient-and-a-stroke suits included in the binary, but I do NOT grant license to use my crappy sample assets (which took me literally 5 minutes to make and were stolen from another game project I'm working on). 
