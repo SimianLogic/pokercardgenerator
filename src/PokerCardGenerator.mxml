@@ -800,33 +800,54 @@
 		private function onSelectExport(event:Event):void
 		{
 			var export_folder:File = event.target as File;
-			trace("SUCCESSFULLY EXPORTED TO " + export_folder.nativePath);
+			trace("SUCCESSFULLY CHOSE FOLDER: " + export_folder.nativePath);
 			
+			var old_width:Number = cards[0].width;
+			var old_height:Number = cards[0].height;
 			
-			var png:PNGEncoder = new PNGEncoder();
-			for each(var card:PokerCard in cards)
+			var card:PokerCard;
+			for each(card in cards)
 			{
-				var file_name:String = card.suitAsString + "_" + card.value + ".png";
-				trace("SAVE " + export_folder.nativePath + File.separator + file_name);
-								
-				var old_width:Number = card.width;
-				var old_height:Number = card.height;
-				
 				card.width = currentWidth;
 				card.height = currentHeight;
-				
-				var bitmap_data:BitmapData = new BitmapData(currentWidth, currentHeight);
-				bitmap_data.draw(card, new Matrix());
-				var image_data:ByteArray = png.encode(bitmap_data);
-				
-				
-				var output:File = new File(export_folder.nativePath + File.separator + file_name);
-				var stream:FileStream = new FileStream();
-				
-				stream.open(output, FileMode.WRITE);
-				stream.writeBytes(image_data);
-				stream.close();
 			}
+			
+			var png:PNGEncoder = new PNGEncoder();
+			
+			//defer a frame so our UIComponents can render at the proper size...
+			var frame:int = 0;
+			var handler:Function = function(e:Event):void{
+				if(frame == 0)
+				{
+					for each(card in cards)
+					{
+						var file_name:String = card.suitAsString + "_" + card.value + ".png";
+						trace("SAVE " + export_folder.nativePath + File.separator + file_name);
+						
+						var bitmap_data:BitmapData = new BitmapData(currentWidth, currentHeight);
+						bitmap_data.draw(card, new Matrix());
+						var image_data:ByteArray = png.encode(bitmap_data);
+
+						var output:File = new File(export_folder.nativePath + File.separator + file_name);
+						var stream:FileStream = new FileStream();
+						
+						stream.open(output, FileMode.WRITE);
+						stream.writeBytes(image_data);
+						stream.close();
+					}					
+				}else{
+					removeEventListener(Event.ENTER_FRAME, handler);
+					for each(card in cards)
+					{
+						card.width = old_width;
+						card.height = old_height;
+					}
+				}
+				frame++;
+			};
+			
+			addEventListener(Event.ENTER_FRAME, handler);
+			
 		}
 		
 	]]></mx:Script>
