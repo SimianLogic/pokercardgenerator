@@ -11,7 +11,6 @@ src/SixWordsSpaceport-app.xml
 .project
 bin-debug/
 out/
-
-
+export/
 
 
